@@ -1,3 +1,5 @@
+package DB.Types;
+
 public class Position {
     int id;
     String room;
@@ -22,7 +24,7 @@ public class Position {
         public Builder space(String space) {this.space = space; return this;}
         public Builder level(int level) {this.level = level; return this;}
 
-        Position build() {
+        public Position build() {
             return new Position(this);
         }
     }

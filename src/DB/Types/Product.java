@@ -1,3 +1,5 @@
+package DB.Types;
+
 public class Product {
     int id;
     String mainCode;

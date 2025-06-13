@@ -1,8 +1,10 @@
+package DB.Types;
+
 public class ProductPosition {
     private final int prodID;
     private final int posID;
 
-    ProductPosition(int prodID, int posID) {
+    public ProductPosition(int prodID, int posID) {
         this.prodID = prodID;
         this.posID = posID;
     }

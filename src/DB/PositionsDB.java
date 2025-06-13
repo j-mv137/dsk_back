@@ -1,10 +1,16 @@
+package DB;
+
+import DB.Types.Position;
+import DB.Types.Product;
+import DB.Types.ProductPosition;
+
 import java.sql.*;
 import java.util.ArrayList;
 
 public class PositionsDB {
     Connection db;
 
-    PositionsDB(Connection db) {
+    public PositionsDB(Connection db) {
         this.db = db;
         this.CreateTable();
     }
@@ -21,7 +27,7 @@ public class PositionsDB {
                     "ON DELETE CASCADE ON UPDATE CASCADE);");
 
             if(err != 0) {
-                System.out.println("Something failed creating the products_positions table.");
+                System.out.println("Algo salió mal creando la tabla productos_posiciones");
                 System.exit(err);
             }
             st.close();
@@ -43,7 +49,7 @@ public class PositionsDB {
             int err = st.executeUpdate();
 
             if (err != 0) {
-                System.out.println("Salió mal algo combiando la posición del artículo");
+                System.out.println("Algo salió mal combiando la posición del artículo");
                 System.exit(err);
             }
         } catch (SQLException e) {
@@ -54,7 +60,7 @@ public class PositionsDB {
 
     void addPosition(int prodID, int posID) {
         try {
-            if (this.prodPosPairRep(prodID, posID)) {
+            if (this.repeated(prodID, posID)) {
                 System.out.print("El producto ya tiene la posición asignada");
                 return;
             }
@@ -67,7 +73,7 @@ public class PositionsDB {
             int err = st.executeUpdate();
 
             if (err != 0) {
-                System.out.println("Salió mal algo insertando la nueva posición del artículo");
+                System.out.println("Algo salió mal insertando la nueva posición del artículo.");
                 System.exit(err);
             }
         } catch (SQLException e) {
@@ -76,7 +82,7 @@ public class PositionsDB {
         }
     }
 
-    private boolean prodPosPairRep(int prodID, int posID) {
+    private boolean repeated(int prodID, int posID) {
         try {
             PreparedStatement st = this.db.prepareStatement("SELECT * FROM products_positions " +
                     "WHERE product_id = ? AND position_id = ?;");
@@ -118,7 +124,7 @@ public class PositionsDB {
                     "pr.description, pr.selling_price, pr.cost, pr.currency, pr.article_count, " +
                     "pr.provider_id, pr.min_quantity FROM products pr " +
                     "INNER JOIN products_positions pp ON pr.id = pp.product_id" +
-                    "WHERE pp.position_id = ?;");
+                    " WHERE pp.position_id = ?;");
 
             st.setInt(1, posID);
 
