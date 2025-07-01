@@ -21,9 +21,9 @@ public class PositionsDB {
             int err = st.executeUpdate("CREATE TABLE IF NOT EXISTS products_positions (" +
                     "id SERIAL PRIMARY KEY, product_id INT, position_id INT," +
                     "CONSTRAINT unique_prod_pos_pair UNIQUE (product_id, position_id)," +
-                    "CONSTRAINT prod_id FOREIGN KEY(product_id)) REFERENCES products(id)" +
+                    "CONSTRAINT prod_id FOREIGN KEY(product_id) REFERENCES products(id)" +
                     "ON DELETE CASCADE ON UPDATE CASCADE," +
-                    "CONSTRAINT pos_id FOREIGN KEY(position_id), REFERENCES positions(id)" +
+                    "CONSTRAINT pos_id FOREIGN KEY(position_id) REFERENCES positions(id)" +
                     "ON DELETE CASCADE ON UPDATE CASCADE);");
 
             if(err != 0) {
@@ -32,7 +32,7 @@ public class PositionsDB {
             }
             st.close();
         } catch (SQLException e) {
-            System.out.printf("Error: %s", e.getMessage());
+            System.err.printf("Error: positions_createTable %s", e.getMessage());
             System.exit(1);
         }
     }
@@ -95,7 +95,7 @@ public class PositionsDB {
             return rs.next();
 
         } catch (SQLException e) {
-            System.out.printf("Error: %s", e);
+            System.out.printf("Error: positions_repeated %s", e);
             return false;
         }
     }
@@ -134,16 +134,15 @@ public class PositionsDB {
 
             while(rows.next()) {
                 prods.add(new Product.Builder()
-                                .id(rows.getInt("id"))
-                                .mainCode(rows.getString("code"))
-                                .secondCode(rows.getString("secondary_code"))
-                                .description(rows.getString("description"))
-                                .sellPrice(rows.getFloat("selling_price"))
-                                .cost(rows.getFloat("cost"))
-                                .currency(rows.getString("currency"))
-                                .artCount(rows.getInt("article_count"))
-                                .providerID(rows.getInt("provider_id"))
-                                .minQuantity(rows.getInt("min_quantity"))
+                        .id(rows.getInt("id"))
+                        .mainCode(rows.getString("code"))
+                        .secondCode(rows.getString("secondary_code"))
+                        .description(rows.getString("description"))
+                        .sellPrice(rows.getDouble("selling_price"))
+                        .cost(rows.getDouble("cost"))
+                        .currency(rows.getString("currency"))
+                        .artNum(rows.getInt("article_count"))
+                        .minQuantity(rows.getInt("min_quantity"))
                         .build());
             }
 
