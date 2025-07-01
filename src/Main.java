@@ -24,7 +24,7 @@ public class Main {
             ProductsDB productsDB = new ProductsDB(db);
             if (args.length < 1) {
                 args = new String[1];
-                args[0] = "{\"method\": \"getProdsBySearch\", args:[\"\"]}";
+                args[0] = "{\"method\": \"getProdsBySearch\", args:[\"pedrollo\"]}";
             }
             String res = handleQuery(args[0], productsDB);
 
