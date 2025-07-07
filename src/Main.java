@@ -1,4 +1,5 @@
 import Api.Types.ApiError;
+import DB.OrdersDB;
 import DB.ProductsDB;
 
 import java.sql.Connection;
@@ -10,23 +11,25 @@ import static Api.Api.handleQuery;
 
 public class Main {
     public static void main(String[] args) {
-//        if (args.length != 1) {
-//            ApiError error = ApiError
-//                    .buildMsg("Error en la llamada ala API: args = %d. args = 1"
-//                                    .formatted(args.length)
-//                            , "");
-//
-//            System.err.println(error.getMessage());
-//        }
+        if (args.length != 1) {
+            ApiError error = ApiError
+                    .buildMsg("Error en la llamada ala API: args = %d. args = 1"
+                                    .formatted(args.length)
+                            , "");
+
+            System.err.println(error.getMessage());
+        }
 
         try {
             Connection db = connect();
+
+            // Temporal solution.
             ProductsDB productsDB = new ProductsDB(db);
-            if (args.length < 1) {
-                args = new String[1];
-                args[0] = "{\"method\": \"getProdsBySearch\", args:[\"pedrollo\"]}";
-            }
-            String res = handleQuery(args[0], productsDB);
+            OrdersDB ordersDB = new OrdersDB(db);
+
+            // Send the only arg (the json formatted string)
+            // to the function that decides which method to exec.
+            String res = handleQuery(args[0], productsDB, ordersDB);
 
             System.out.println(res);
             db.close();

@@ -302,6 +302,18 @@ public class ProductsDB {
                         prodsMap.put("pedrollo", prodsPed);
                     }
                     prodsMap.get("pedrollo").add(prod);
+                } else if (department.contains("evans")) {
+                    if(!prodsMap.containsKey("evans")) {
+                        ArrayList<Product> prodsEvans = new ArrayList<>();
+                        prodsMap.put("evans", prodsEvans);
+                    }
+                    prodsMap.get("evans").add(prod);
+                } else if (department.contains("emmsa")) {
+                    if(!prodsMap.containsKey("emmsa")) {
+                        ArrayList<Product> prodsEmmsa = new ArrayList<>();
+                        prodsMap.put("emmsa", prodsEmmsa);
+                    }
+                    prodsMap.get("emmsa").add(prod);
                 }
             }
 

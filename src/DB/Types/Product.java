@@ -3,17 +3,17 @@ package DB.Types;
 import com.google.gson.JsonObject;
 
 public class Product {
-    int id;
-    String mainCode;
-    String secondCode;
-    String description;
-    String department;
-    String category;
-    double sellPrice;
-    double cost;
-    String currency;
-    int artNum;
-    int minQuantity;
+    private final int id;
+    private final String mainCode;
+    private final String secondCode;
+    private final String description;
+    private final String department;
+    private final String category;
+    private final double sellPrice;
+    private final double cost;
+    private final String currency;
+    private final int artNum;
+    private final int minQuantity;
 
     Product(Builder b) {
         this.id = b.id;

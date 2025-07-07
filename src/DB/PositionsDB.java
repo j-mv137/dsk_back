@@ -12,7 +12,6 @@ public class PositionsDB {
 
     public PositionsDB(Connection db) {
         this.db = db;
-        this.CreateTable();
     }
 
       void CreateTable() {
