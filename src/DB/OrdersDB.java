@@ -27,6 +27,7 @@ public class OrdersDB {
 
 
             int id = orderJson.get("id").getAsInt();
+            int noteId = orderJson.get("noteId").getAsInt();
             String dateStr = orderJson.get("date").getAsString();
             String type = orderJson.get("type").getAsString();
             String name = orderJson.get("name").getAsString();
@@ -40,6 +41,7 @@ public class OrdersDB {
 
             return new Order.Builder()
                     .id(id)
+                    .noteId(noteId)
                     .date(dateTime)
                     .type(type)
                     .name(name)
@@ -60,8 +62,8 @@ public class OrdersDB {
             Order order = parseOrder(query);
 
             PreparedStatement st = this.db.prepareStatement("INSERT INTO orders " +
-                    "(id, date, type, name, address, phone, description, status) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                    "(id, date, type, name, address, phone, description, status, note_id) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             st.setInt(1, order.getId());
             st.setTimestamp(2, order.getDate());
@@ -71,6 +73,7 @@ public class OrdersDB {
             st.setString(6, order.getPhone());
             st.setString(7, order.getDescription());
             st.setString(8, order.getStatus());
+            st.setInt(9, order.getNoteId());
 
             st.executeQuery();
         } catch (SQLException e) {
@@ -98,6 +101,7 @@ public class OrdersDB {
             while(rows.next()) {
                 ordersList.add(new Order.Builder()
                         .id(rows.getInt("id"))
+                        .note(rows.getInt("note_id"))
                         .date(rows.getTimestamp("date"))
                         .name(rows.getString("name"))
                         .type(rows.getString("type"))

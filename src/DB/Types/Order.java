@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 
 public class Order {
     private final int id;
+    private final int noteId;
     private final Timestamp date;
     private final String type;
     private final String name;
@@ -17,6 +18,7 @@ public class Order {
 
     Order(Builder b) {
         this.id = b.id;
+        this.noteId = b.noteId;
         this.date = b.date;
         this.type = b.type;
         this.name = b.name;
@@ -30,6 +32,7 @@ public class Order {
         JsonObject jsonOrder = new JsonObject();
 
         jsonOrder.addProperty("id", this.id);
+        jsonOrder.addProperty("noteId", this.noteId);
         jsonOrder.addProperty("timestamp", this.date.toString());
         jsonOrder.addProperty("type", this.type);
         jsonOrder.addProperty("name", this.name);
@@ -72,8 +75,13 @@ public class Order {
         return status;
     }
 
+    public int getNoteId() {
+        return noteId;
+    }
+
     public static class Builder {
         int id;
+        int noteId;
         Timestamp date;
         String type;
         String name;
@@ -84,6 +92,11 @@ public class Order {
 
         public Builder id(int id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder noteId(int noteId) {
+            this.noteId = noteId;
             return this;
         }
 
