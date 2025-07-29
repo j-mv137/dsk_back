@@ -101,7 +101,7 @@ public class OrdersDB {
             while(rows.next()) {
                 ordersList.add(new Order.Builder()
                         .id(rows.getInt("id"))
-                        .note(rows.getInt("note_id"))
+                        .noteId(rows.getInt("note_id"))
                         .date(rows.getTimestamp("date"))
                         .name(rows.getString("name"))
                         .type(rows.getString("type"))

@@ -4,10 +4,12 @@ import com.google.gson.JsonObject;
 
 public class Types {
     public static class ApiQuery {
+        private final String direction;
         private final String method;
         private final Object[] args;
 
-        ApiQuery(String method, Object[] args) {
+        ApiQuery(String direction, String method, Object[] args) {
+            this.direction = direction;
             this.method = method;
             this.args = args;
         }
@@ -19,6 +21,8 @@ public class Types {
         public Object[] getArgs() {
             return args;
         }
+
+        public String getDirection() { return direction; }
     }
 
 

@@ -11,27 +11,29 @@ import static Api.Api.handleQuery;
 
 public class Main {
     public static void main(String[] args) {
+        // There must only be one arg. cont. the req.
         if (args.length != 1) {
             ApiError error = ApiError
-                    .buildMsg("Error en la llamada ala API: args = %d. args = 1"
-                                    .formatted(args.length)
-                            , "");
+                    .buildMsg("Error en la llamada ala API: args = %d. args = 1".formatted(args.length), "");
 
             System.err.println(error.getMessage());
         }
 
         try {
+            // Throws APIError. For some reason decided was a good idea.
             Connection db = connect();
 
             // Temporal solution.
             ProductsDB productsDB = new ProductsDB(db);
             OrdersDB ordersDB = new OrdersDB(db);
 
-            // Send the only arg (the json formatted string)
-            // to the function that decides which method to exec.
+            // handle request.
             String res = handleQuery(args[0], productsDB, ordersDB);
 
+            // Print to stdout
             System.out.println(res);
+
+            // Throw
             db.close();
         } catch (ApiError e) {
             System.err.println(e.getMessage());
