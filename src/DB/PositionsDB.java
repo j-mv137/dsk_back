@@ -12,6 +12,7 @@ public class PositionsDB {
 
     public PositionsDB(Connection db) {
         this.db = db;
+        CreateTable();
     }
 
       void CreateTable() {

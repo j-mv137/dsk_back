@@ -6,13 +6,13 @@ import java.sql.Timestamp;
 
 public class Order {
     private final int id;
-    private final int noteId;
     private final Timestamp date;
     private final String type;
     private final String name;
     private final String address;
     private final String phone;
     private final String description;
+    private final String noteId;
     private final String status;
 
 
@@ -33,10 +33,11 @@ public class Order {
 
         jsonOrder.addProperty("id", this.id);
         jsonOrder.addProperty("noteId", this.noteId);
-        jsonOrder.addProperty("timestamp", this.date.toString());
+        jsonOrder.addProperty("date", this.date.toString());
         jsonOrder.addProperty("type", this.type);
         jsonOrder.addProperty("name", this.name);
         jsonOrder.addProperty("address", this.address);
+        jsonOrder.addProperty("status", this.status);
         jsonOrder.addProperty("phone", this.phone);
         jsonOrder.addProperty("description", this.description);
 
@@ -75,13 +76,13 @@ public class Order {
         return status;
     }
 
-    public int getNoteId() {
+    public String getNoteId() {
         return noteId;
     }
 
     public static class Builder {
         int id;
-        int noteId;
+        String noteId;
         Timestamp date;
         String type;
         String name;
@@ -95,7 +96,7 @@ public class Order {
             return this;
         }
 
-        public Builder noteId(int noteId) {
+        public Builder noteId(String noteId) {
             this.noteId = noteId;
             return this;
         }

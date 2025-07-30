@@ -36,7 +36,7 @@ public class Types {
             errorJson.addProperty("ErrorMessage", msg);
             errorJson.addProperty( "RealError", realMsg);
 
-            return new ApiError(errorJson.getAsString());
+            return new ApiError(errorJson.toString());
         }
     }
 }

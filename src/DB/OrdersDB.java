@@ -27,12 +27,12 @@ public class OrdersDB {
 
 
             int id = orderJson.get("id").getAsInt();
-            int noteId = orderJson.get("noteId").getAsInt();
+            String noteId = orderJson.get("noteId").getAsString();
             String dateStr = orderJson.get("date").getAsString();
             String type = orderJson.get("type").getAsString();
             String name = orderJson.get("name").getAsString();
             String address = orderJson.get("address").getAsString();
-            String phone = orderJson.get("phone").getAsString();
+            String phone = orderJson.get("phoneNum").getAsString();
             String description = orderJson.get("description").getAsString();
             String status = orderJson.get("status").getAsString();
 
@@ -73,9 +73,9 @@ public class OrdersDB {
             st.setString(6, order.getPhone());
             st.setString(7, order.getDescription());
             st.setString(8, order.getStatus());
-            st.setInt(9, order.getNoteId());
+            st.setString(9, order.getNoteId());
 
-            st.executeQuery();
+            st.executeUpdate();
         } catch (SQLException e) {
             throw ApiError.buildMsg("Error al insertar orden", e.getMessage());
         }
@@ -101,7 +101,7 @@ public class OrdersDB {
             while(rows.next()) {
                 ordersList.add(new Order.Builder()
                         .id(rows.getInt("id"))
-                        .noteId(rows.getInt("note_id"))
+                        .noteId(rows.getString("note_id"))
                         .date(rows.getTimestamp("date"))
                         .name(rows.getString("name"))
                         .type(rows.getString("type"))
@@ -120,7 +120,7 @@ public class OrdersDB {
     }
 
     public static Timestamp toTimestamp(String dateTimeStr) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr, formatter);
 
         return Timestamp.valueOf(dateTime);

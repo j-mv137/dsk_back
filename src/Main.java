@@ -12,28 +12,32 @@ import static Api.Api.handleQuery;
 public class Main {
     public static void main(String[] args) {
         // There must only be one arg. cont. the req.
-        if (args.length != 1) {
-            ApiError error = ApiError
-                    .buildMsg("Error en la llamada ala API: args = %d. args = 1".formatted(args.length), "");
+//        if (args.length != 1) {
+//            ApiError error = ApiError
+//                    .buildMsg("Error en la llamada a la API: args = %d. args = 1".formatted(args.length), "");
+//
+//            System.err.println(error.getMessage());
+//            return;
+//        }
 
-            System.err.println(error.getMessage());
-        }
 
         try {
             // Throws APIError. For some reason decided was a good idea.
             Connection db = connect();
+            String res;
 
-            // Temporal solution.
             ProductsDB productsDB = new ProductsDB(db);
             OrdersDB ordersDB = new OrdersDB(db);
 
-            // handle request.
-            String res = handleQuery(args[0], productsDB, ordersDB);
+            if (args.length != 0) {
+                // Handle req. and print to stdout
+                res = handleQuery(args[0], productsDB, ordersDB);
+            } else {
+                String tryQuery ="{\"direction\":\"Orders\",\"method\":\"addOrder\",\"args\":[\"{\\\"date\\\":\\\"15/07/2025, 00:00:00\\\",\\\"noteId\\\":\\\"412\\\",\\\"status\\\":\\\"pendiente\\\",\\\"type\\\":\\\"revisión\\\",\\\"name\\\":\\\"Jacovanana Morales\\\",\\\"description\\\":\\\"Jacobo Morales\\\",\\\"address\\\":\\\"Holas\\\",\\\"phoneNum\\\":\\\"622 143 3432\\\",\\\"id\\\":\\\"413424\\\"}\"]}";
+                res = handleQuery(tryQuery, productsDB, ordersDB);
+            }
 
-            // Print to stdout
             System.out.println(res);
-
-            // Throw
             db.close();
         } catch (ApiError e) {
             System.err.println(e.getMessage());
@@ -47,7 +51,7 @@ public class Main {
 
 
     static Connection connect() throws ApiError{
-        String connString = "jdbc:postgresql://localhost/aye_dsk?user=jacobo&password=jacobon137";
+        String connString = "jdbc:postgresql://localhost/aye?user=jacobo";
 
         try {
             return DriverManager.getConnection(connString);

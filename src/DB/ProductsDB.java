@@ -73,13 +73,13 @@ public class ProductsDB {
     private String getAllSimilar(String query) {
         // Creates a string of the form "wd1 | simWd1 | simWd1 | wd2 | ... "
         String allSimWords = "";
-        // Split the query to separate each word. The regex makes it so we don't consider
-        // the blank spaces before the first word
-        //
+
+        // Removes whitespace at the edges
         query = query.strip();
 
         if (query.isEmpty()) return "";
 
+        // Split the string based on the whitespaces
         String[] words = query.split("\\s+");
 
         for(int i = 0; i < words.length; i++) {
