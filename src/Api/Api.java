@@ -1,6 +1,7 @@
 package Api;
 
 import DB.OrdersDB;
+import DB.PositionsDB;
 import DB.ProductsDB;
 import Api.Types.ApiQuery;
 import Api.Types.ApiError;
@@ -11,6 +12,7 @@ import com.google.gson.*;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 /*
@@ -24,7 +26,7 @@ import java.util.ArrayList;
 * Sure.
 * */
 public class Api {
-    public static String handleQuery(String query, ProductsDB productsDB, OrdersDB ordersDB) {
+    public static String handleQuery(String query, ProductsDB productsDB, OrdersDB ordersDB, PositionsDB positionsDB) {
         try {
             ApiQuery apiQuery = parseQuery(query);
 
@@ -35,6 +37,7 @@ public class Api {
             apiRes = switch (direction) {
                 case "Products" -> handleProdsQuery(apiQuery, productsDB);
                 case "Orders" -> handleOrdersQuery(apiQuery, ordersDB);
+                case "Positions" -> handlePositionsQuery(apiQuery, positionsDB);
                 default -> "";
             };
 
@@ -61,7 +64,7 @@ public class Api {
                         prodsJson.add(prod.toJson());
                     }
 
-                    apiRes = prodsJson.getAsString();
+                    apiRes = prodsJson.toString();
                     break;
                 default:
                     apiRes="";
@@ -84,23 +87,26 @@ public class Api {
                     String ordersQuery = apiQuery.getArgs()[0].toString();
                     ordersDB.addOrder(ordersQuery);
 
-                    apiRes = "";
+                    apiRes = "0";
                     break;
 
-                case "getOrdersbyDate":
+                case "getOrdersByDate":
 
                     // two args init. and final datetime, check if the args are a string array
-                    Object[] getOrdersQuery = apiQuery.getArgs();
-                    if (getOrdersQuery.getClass() != String[].class) {
-                        // I think it will be caught within this func and after that everything goes smooth.
+                    String[] ordersDates = (String[]) apiQuery.getArgs();
+
+                    if (ordersDates.length != 2) {
                         throw ApiError
-                                .buildMsg("Error: argumentos inválidos para la función getOrdersByDate"
+                                .buildMsg("invalid args. length at f_handleOrdersQuery opt: getOrdersById"
                                         , "");
                     }
-                    ;
 
-                    Timestamp initialDate = OrdersDB.toTimestamp(getOrdersQuery[0].toString());
-                    Timestamp finalDate = OrdersDB.toTimestamp(getOrdersQuery[1].toString());
+
+                    String initDateStr = ordersDates[0];
+                    String finalDateStr = ordersDates[1];
+
+                    Timestamp initialDate = OrdersDB.toTimestamp(initDateStr);
+                    Timestamp finalDate = OrdersDB.toTimestamp(finalDateStr);
 
                     Order[] orders = ordersDB.getOrdersByDate(initialDate, finalDate);
 
@@ -110,13 +116,66 @@ public class Api {
                         ordersJson.add(order.toJson());
                     }
 
-                    apiRes = ordersJson.getAsString();
-                    break;
+                    apiRes = ordersJson.toString();
 
+                    break;
                 default:
                     apiRes = "";
             }
 
+            return apiRes;
+        } catch (ApiError e) {
+            return e.getMessage();
+        }
+    }
+
+    private static String handlePositionsQuery(ApiQuery apiQuery, PositionsDB positionsDB) throws ApiError{
+        String method = apiQuery.getMethod();
+        try {
+            String apiRes;
+
+            switch (method) {
+                case "getProdsByRack":
+                    // args: key, room
+                    String[] posCred = (String[]) apiQuery.getArgs();
+
+                    if (posCred.length != 2) {
+                        throw ApiError.buildMsg("Error: f_handlePositionsQuery c_getProdsByRack. Only two args"
+                                , "");
+                    }
+
+                    String key = posCred[0];
+                    String room = posCred[1];
+
+                    Product[] prods = positionsDB.getProdsByRack(key, room);
+
+                    JsonArray prodsJson = new JsonArray();
+
+                    for(Product prod : prods) {
+                        prodsJson.add(prod.toJson());
+                    }
+
+                    apiRes = prodsJson.toString();
+                    break;
+
+                case "addPosToProd":
+                    // args: prodId, posId
+                    Integer[] posProdCred = (Integer[]) apiQuery.getArgs();
+
+                    if(posProdCred.length != 2) {
+                        throw ApiError.buildMsg("f_handlePositionsQuery, c_addPosToProd args should be of length 2"
+                                ,"");
+                    }
+
+                    int prodId = posProdCred[0];
+                    int posId = posProdCred[1];
+
+                    positionsDB.addPosition(prodId, posId);
+
+                default:
+                    apiRes= "";
+                    break;
+            }
             return apiRes;
         } catch (ApiError e) {
             return e.getMessage();

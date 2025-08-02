@@ -1,5 +1,6 @@
 import Api.Types.ApiError;
 import DB.OrdersDB;
+import DB.PositionsDB;
 import DB.ProductsDB;
 
 import java.sql.Connection;
@@ -28,13 +29,13 @@ public class Main {
 
             ProductsDB productsDB = new ProductsDB(db);
             OrdersDB ordersDB = new OrdersDB(db);
+            PositionsDB positionsDB = new PositionsDB(db);
 
-            if (args.length != 0) {
-                // Handle req. and print to stdout
-                res = handleQuery(args[0], productsDB, ordersDB);
+            if (args.length == 1) {
+                res = handleQuery(args[0], productsDB, ordersDB, positionsDB);
             } else {
-                String tryQuery ="{\"direction\":\"Orders\",\"method\":\"addOrder\",\"args\":[\"{\\\"date\\\":\\\"15/07/2025, 00:00:00\\\",\\\"noteId\\\":\\\"412\\\",\\\"status\\\":\\\"pendiente\\\",\\\"type\\\":\\\"revisión\\\",\\\"name\\\":\\\"Jacovanana Morales\\\",\\\"description\\\":\\\"Jacobo Morales\\\",\\\"address\\\":\\\"Holas\\\",\\\"phoneNum\\\":\\\"622 143 3432\\\",\\\"id\\\":\\\"413424\\\"}\"]}";
-                res = handleQuery(tryQuery, productsDB, ordersDB);
+                String tempQuery = "{\"direction\":\"Products\",\"method\":\"getProdsBySearch\",\"args\":[\"bomba dab\"]}";
+                res = handleQuery(tempQuery, productsDB, ordersDB, positionsDB);
             }
 
             System.out.println(res);

@@ -12,7 +12,7 @@ public class ProductsDB {
         this.db = db;
     }
 
-    public void updateWordsTable(String description) {
+    private void updateWordsTable(String description) {
         try {
             PreparedStatement st =  this.db.prepareStatement("INSERT INTO wds_description (word) " +
                     "VALUES (ts_stat('SELECT to_tsvector(''simple'', ?)) FROM products');");
@@ -109,7 +109,7 @@ public class ProductsDB {
             while(rows.next()) {
                 Product prod = new Product.Builder()
                         .id(rows.getInt("id"))
-                        .mainCode(rows.getString("code"))
+                        .mainCode(rows.getString("main_code"))
                         .secondCode(rows.getString("second_code"))
                         .description(rows.getString("description"))
                         .department(rows.getString("department"))
@@ -141,7 +141,7 @@ public class ProductsDB {
         ArrayList<Product> prods = new ArrayList<>();
         try {
             PreparedStatement st = this.db.prepareStatement("SELECT * FROM products " +
-                                "WHERE to_tsvector(code) @@ websearch_to_tsquery(?) " +
+                                "WHERE to_tsvector(main_code) @@ websearch_to_tsquery(?) " +
                                 "OR to_tsvector(second_code) @@ websearch_to_tsquery(?);");
 
             st.setString(1, query);
@@ -152,7 +152,7 @@ public class ProductsDB {
             while(rows.next()) {
                 Product prod = new Product.Builder()
                         .id(rows.getInt("id"))
-                        .mainCode(rows.getString("code"))
+                        .mainCode(rows.getString("main_code"))
                         .secondCode(rows.getString("second_code"))
                         .description(rows.getString("description"))
                         .department(rows.getString("department"))

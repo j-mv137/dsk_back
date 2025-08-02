@@ -90,8 +90,8 @@ public class OrdersDB {
 
         try {
 
-            PreparedStatement st = this.db.prepareStatement("SELECT * FROM orders or " +
-                    "WHERE or.timestamp >= ? and or.timestamp <= ?;");
+            PreparedStatement st = this.db.prepareStatement("SELECT * FROM orders" +
+                    " WHERE date >= ? AND date <= ?;");
 
             st.setTimestamp(1, initialDate);
             st.setTimestamp(2, finalDate);
@@ -99,7 +99,7 @@ public class OrdersDB {
             ResultSet rows =  st.executeQuery();
 
             while(rows.next()) {
-                ordersList.add(new Order.Builder()
+                Order order = new Order.Builder()
                         .id(rows.getInt("id"))
                         .noteId(rows.getString("note_id"))
                         .date(rows.getTimestamp("date"))
@@ -109,7 +109,9 @@ public class OrdersDB {
                         .phone(rows.getString("phone"))
                         .description(rows.getString("description"))
                         .status(rows.getString("status"))
-                        .build());
+                        .build();
+
+                ordersList.add(order);
             }
 
             return ordersList.toArray(new Order[0]);

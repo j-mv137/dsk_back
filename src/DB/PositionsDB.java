@@ -1,5 +1,6 @@
 package DB;
 
+import Api.Types.ApiError;
 import DB.Types.Position;
 import DB.Types.Product;
 import DB.Types.ProductPosition;
@@ -12,31 +13,7 @@ public class PositionsDB {
 
     public PositionsDB(Connection db) {
         this.db = db;
-        CreateTable();
     }
-
-      void CreateTable() {
-        try {
-            Statement st = this.db.createStatement();
-            int err = st.executeUpdate("CREATE TABLE IF NOT EXISTS products_positions (" +
-                    "id SERIAL PRIMARY KEY, product_id INT, position_id INT," +
-                    "CONSTRAINT unique_prod_pos_pair UNIQUE (product_id, position_id)," +
-                    "CONSTRAINT prod_id FOREIGN KEY(product_id) REFERENCES products(id)" +
-                    "ON DELETE CASCADE ON UPDATE CASCADE," +
-                    "CONSTRAINT pos_id FOREIGN KEY(position_id) REFERENCES positions(id)" +
-                    "ON DELETE CASCADE ON UPDATE CASCADE);");
-
-            if(err != 0) {
-                System.out.println("Algo salió mal creando la tabla productos_posiciones");
-                System.exit(err);
-            }
-            st.close();
-        } catch (SQLException e) {
-            System.err.printf("Error: positions_createTable %s", e.getMessage());
-            System.exit(1);
-        }
-    }
-
 
     void updatePositions(int prodID, int oldPosID, int newPosID) {
         try{
@@ -58,27 +35,21 @@ public class PositionsDB {
         }
     }
 
-    void addPosition(int prodID, int posID) {
+    public void addPosition(int prodID, int posID) throws ApiError {
         try {
             if (this.repeated(prodID, posID)) {
-                System.out.print("El producto ya tiene la posición asignada");
-                return;
+                throw ApiError.buildMsg("f_addPosition cls_posDB the prod-pos relation already exists"
+                        , "");
             }
 
             PreparedStatement st = this.db.prepareStatement("INSERT INTO products_positions " +
-                    "(products_id, positions_id) VALUES (?, ?);");
+                    "(products_id, position_id) VALUES (?, ?);");
             st.setInt(1, prodID);
-            st.setInt(1, posID);
+            st.setInt(2, posID);
 
-            int err = st.executeUpdate();
-
-            if (err != 0) {
-                System.out.println("Algo salió mal insertando la nueva posición del artículo.");
-                System.exit(err);
-            }
+            st.executeUpdate();
         } catch (SQLException e) {
-            System.out.printf("Error: %s", e.getMessage());
-            System.exit(1);
+               throw ApiError.buildMsg("f_addPosition cls_posDB error in the exec of th sql query", "");
         }
     }
 
@@ -118,15 +89,19 @@ public class PositionsDB {
         }
     }
 
-    ArrayList<Product> getProductsByPos(int posID) {
+    public  Product[] getProdsByRack(String key, String room) throws ApiError{
         try {
-            PreparedStatement st = this.db.prepareStatement("SELECT pr.id, pr.code, pr.secondary_code," +
-                    "pr.description, pr.selling_price, pr.cost, pr.currency, pr.article_count, " +
-                    "pr.provider_id, pr.min_quantity FROM products pr " +
-                    "INNER JOIN products_positions pp ON pr.id = pp.product_id" +
-                    " WHERE pp.position_id = ?;");
 
-            st.setInt(1, posID);
+            PreparedStatement st = this.db.prepareStatement("SELECT pr.id, pr.main_code, pr.second_code," +
+                    "pr.description, pr.sell_price, pr.cost, pr.currency, pr.art_num, " +
+                    "pr.min_quantity FROM products pr " +
+                    "INNER JOIN products_positions pp ON pr.id = pp.product_id " +
+                    "INNER JOIN positions pos ON pp.position_id = pos.id " +
+                    "WHERE pos.room = ? AND pos.key = ?;");
+
+            st.setString(1, room);
+            st.setString(2, key);
+
 
             ResultSet rows = st.executeQuery();
 
@@ -135,7 +110,7 @@ public class PositionsDB {
             while(rows.next()) {
                 prods.add(new Product.Builder()
                         .id(rows.getInt("id"))
-                        .mainCode(rows.getString("code"))
+                        .mainCode(rows.getString("main_code"))
                         .secondCode(rows.getString("secondary_code"))
                         .description(rows.getString("description"))
                         .sellPrice(rows.getDouble("selling_price"))
@@ -146,10 +121,29 @@ public class PositionsDB {
                         .build());
             }
 
-            return prods;
+            return prods.toArray(new Product[0]);
         } catch(SQLException e) {
-            System.out.printf("Error: %s", e.getMessage());
-            return null;
+            // did this for some reason
+            throw ApiError.buildMsg("Error: f_getProdsByRack cls_posDB problem with sql query", e.getMessage());
+        }
+    }
+
+    private int getPositionsId(String key, String room) throws ApiError{
+        try {
+            PreparedStatement st = this.db.prepareStatement("SELECT id FROM positions WHERE key = ? AND room = ?");
+
+            ResultSet rows = st.executeQuery();
+
+            rows.next();
+            if(!rows.isLast()) {
+                throw ApiError.buildMsg("Error: f_getPositionsId cls_posDB query returned more than one position id"
+                        , "");
+            };
+
+            return rows.getInt("id");
+
+        } catch(SQLException e){
+            throw ApiError.buildMsg("Error: f_getPositionsId cls_posDB incorrect sql query", e.getMessage());
         }
     }
 

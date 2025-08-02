@@ -148,7 +148,7 @@ public class Product {
         JsonObject jsonProd = new JsonObject();
 
         jsonProd.addProperty("id", this.id);
-        jsonProd.addProperty("code", this.mainCode);
+        jsonProd.addProperty("mainCode", this.mainCode);
         jsonProd.addProperty("secondCode", this.secondCode);
         jsonProd.addProperty("description", this.description);
         jsonProd.addProperty("department", this.department);
