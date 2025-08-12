@@ -23,7 +23,6 @@ public class Main {
 
 
         try {
-            // Throws APIError. For some reason decided was a good idea.
             Connection db = connect();
             String res;
 
@@ -34,7 +33,7 @@ public class Main {
             if (args.length == 1) {
                 res = handleQuery(args[0], productsDB, ordersDB, positionsDB);
             } else {
-                String tempQuery = "{\"direction\":\"Products\",\"method\":\"getProdsBySearch\",\"args\":[\"bomba dab\"]}";
+                String tempQuery = "{\"direction\":\"Positions\",\"method\":\"getPosForProd\",\"args\":[14409]}";
                 res = handleQuery(tempQuery, productsDB, ordersDB, positionsDB);
             }
 

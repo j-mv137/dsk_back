@@ -21,45 +21,10 @@ public class OrdersDB {
         this.db = db;
     }
 
-    private Order parseOrder(String orderStr) throws ApiError {
-        try {
-            JsonObject orderJson = JsonParser.parseString(orderStr).getAsJsonObject();
-
-
-            int id = orderJson.get("id").getAsInt();
-            String noteId = orderJson.get("noteId").getAsString();
-            String dateStr = orderJson.get("date").getAsString();
-            String type = orderJson.get("type").getAsString();
-            String name = orderJson.get("name").getAsString();
-            String address = orderJson.get("address").getAsString();
-            String phone = orderJson.get("phoneNum").getAsString();
-            String description = orderJson.get("description").getAsString();
-            String status = orderJson.get("status").getAsString();
-
-
-            Timestamp dateTime = toTimestamp(dateStr);
-
-            return new Order.Builder()
-                    .id(id)
-                    .noteId(noteId)
-                    .date(dateTime)
-                    .type(type)
-                    .name(name)
-                    .address(address)
-                    .phone(phone)
-                    .description(description)
-                    .status(status)
-                    .build();
-
-        } catch (JsonSyntaxException e) {
-            throw ApiError.buildMsg("No se pudo convertir el formato dado a un obj. JSON",
-                    e.getMessage());
-        }
-    }
 
     public void addOrder(String query) throws ApiError{
         try {
-            Order order = parseOrder(query);
+            Order order = Order.parseOrderFromJson(query);
 
             PreparedStatement st = this.db.prepareStatement("INSERT INTO orders " +
                     "(id, date, type, name, address, phone, description, status, note_id) " +

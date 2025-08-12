@@ -1,8 +1,13 @@
 package DB.Types;
 
+import Api.Types;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import java.sql.Timestamp;
+
+import static DB.OrdersDB.toTimestamp;
 
 public class Order {
     private final int id;
@@ -42,6 +47,42 @@ public class Order {
         jsonOrder.addProperty("description", this.description);
 
         return jsonOrder;
+    }
+
+    public static Order parseOrderFromJson(String orderStr) throws Types.ApiError {
+        try {
+            JsonObject orderJson = JsonParser.parseString(orderStr).getAsJsonObject();
+
+
+            int id = orderJson.get("id").getAsInt();
+            String noteId = orderJson.get("noteId").getAsString();
+            String dateStr = orderJson.get("date").getAsString();
+            String type = orderJson.get("type").getAsString();
+            String name = orderJson.get("name").getAsString();
+            String address = orderJson.get("address").getAsString();
+            String phone = orderJson.get("phoneNum").getAsString();
+            String description = orderJson.get("description").getAsString();
+            String status = orderJson.get("status").getAsString();
+
+
+            Timestamp dateTime = toTimestamp(dateStr);
+
+            return new Order.Builder()
+                    .id(id)
+                    .noteId(noteId)
+                    .date(dateTime)
+                    .type(type)
+                    .name(name)
+                    .address(address)
+                    .phone(phone)
+                    .description(description)
+                    .status(status)
+                    .build();
+
+        } catch (JsonSyntaxException e) {
+            throw Types.ApiError.buildMsg("No se pudo convertir el formato dado a un obj. JSON",
+                    e.getMessage());
+        }
     }
 
     public int getId() {

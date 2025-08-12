@@ -6,17 +6,20 @@ import DB.ProductsDB;
 import Api.Types.ApiQuery;
 import Api.Types.ApiError;
 import DB.Types.Order;
+import DB.Types.Position;
 import DB.Types.Product;
 
 import com.google.gson.*;
+import com.google.gson.internal.LazilyParsedNumber;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 
+
+// TODO: 1. change the form of the args attribute to contain a map
 
 /*
-* Receives the request (query) in tbe form of a JSON with the form
+* Receives the request (query) in JSON formatted string with the form
 * {
 *   "direction": "Prods" | "Orders" | "etc",
 *   "method": "nameOfTheMethod",
@@ -26,28 +29,26 @@ import java.util.Arrays;
 * Sure.
 * */
 public class Api {
-    public static String handleQuery(String query, ProductsDB productsDB, OrdersDB ordersDB, PositionsDB positionsDB) {
+    public static String handleQuery(String query, ProductsDB productsDB, OrdersDB ordersDB, PositionsDB positionsDB) throws  ApiError{
         try {
             ApiQuery apiQuery = parseQuery(query);
 
-            String apiRes;
 
             String direction = apiQuery.getDirection();
 
-            apiRes = switch (direction) {
+            return switch (direction) {
                 case "Products" -> handleProdsQuery(apiQuery, productsDB);
                 case "Orders" -> handleOrdersQuery(apiQuery, ordersDB);
                 case "Positions" -> handlePositionsQuery(apiQuery, positionsDB);
                 default -> "";
             };
 
-            return apiRes;
         } catch (ApiError e) {
-            return e.getMessage();
+            throw e;
         }
     }
 
-    private static String handleProdsQuery(ApiQuery apiQuery, ProductsDB prodsDB) {
+    private static String handleProdsQuery(ApiQuery apiQuery, ProductsDB prodsDB) throws ApiError{
         String apiRes;
 
         String method = apiQuery.getMethod();
@@ -55,7 +56,10 @@ public class Api {
         try {
             switch (method) {
                 case "getProdsBySearch":
-                    String searchQuery = apiQuery.getArgs()[0].toString();
+                    Object[] searchQueryObj = apiQuery.getArgs();
+                    validateArgs(searchQueryObj, 1, String.class);
+
+                    String searchQuery = (String) searchQueryObj[0];
 
                     Product[] prods = prodsDB.getProducts(searchQuery);
                     JsonArray prodsJson = new JsonArray();
@@ -71,39 +75,36 @@ public class Api {
             }
             return apiRes;
         } catch (ApiError e) {
-            return e.getMessage();
+            throw e;
         }
     }
 
-    private static String handleOrdersQuery(ApiQuery apiQuery, OrdersDB ordersDB) {
+    private static String handleOrdersQuery(ApiQuery apiQuery, OrdersDB ordersDB) throws ApiError{
         String apiRes;
 
         String method = apiQuery.getMethod();
         try {
             switch (method) {
                 case "addOrder":
-                    // Expecting a JSON formatted string in args.
-                    // this JSON should contain the structure of a row in the Orders DB.
-                    String ordersQuery = apiQuery.getArgs()[0].toString();
+                    // only one arg, a JSON formatted string that has the object of the new order
+                    //TODO: change the func. to receive and actual Order object
+                    Object[] ordersQueryObj = apiQuery.getArgs();
+                    validateArgs(ordersQueryObj, 1, String.class);
+
+                    String ordersQuery = (String) ordersQueryObj[0];
+
                     ordersDB.addOrder(ordersQuery);
 
                     apiRes = "0";
                     break;
 
                 case "getOrdersByDate":
+                    // args: init. and final datetime
+                    Object[] ordersDatesObj =  apiQuery.getArgs();
+                    validateArgs(ordersDatesObj, 2, String.class);
 
-                    // two args init. and final datetime, check if the args are a string array
-                    String[] ordersDates = (String[]) apiQuery.getArgs();
-
-                    if (ordersDates.length != 2) {
-                        throw ApiError
-                                .buildMsg("invalid args. length at f_handleOrdersQuery opt: getOrdersById"
-                                        , "");
-                    }
-
-
-                    String initDateStr = ordersDates[0];
-                    String finalDateStr = ordersDates[1];
+                    String initDateStr = (String) ordersDatesObj[0];
+                    String finalDateStr = (String) ordersDatesObj[1];
 
                     Timestamp initialDate = OrdersDB.toTimestamp(initDateStr);
                     Timestamp finalDate = OrdersDB.toTimestamp(finalDateStr);
@@ -125,7 +126,7 @@ public class Api {
 
             return apiRes;
         } catch (ApiError e) {
-            return e.getMessage();
+            throw e;
         }
     }
 
@@ -137,15 +138,11 @@ public class Api {
             switch (method) {
                 case "getProdsByRack":
                     // args: key, room
-                    String[] posCred = (String[]) apiQuery.getArgs();
+                    Object[] posCredObj =  apiQuery.getArgs();
+                    validateArgs(posCredObj, 2, String.class);
 
-                    if (posCred.length != 2) {
-                        throw ApiError.buildMsg("Error: f_handlePositionsQuery c_getProdsByRack. Only two args"
-                                , "");
-                    }
-
-                    String key = posCred[0];
-                    String room = posCred[1];
+                    String key = (String) posCredObj[0];
+                    String room = (String) posCredObj[1];
 
                     Product[] prods = positionsDB.getProdsByRack(key, room);
 
@@ -159,18 +156,53 @@ public class Api {
                     break;
 
                 case "addPosToProd":
-                    // args: prodId, posId
-                    Integer[] posProdCred = (Integer[]) apiQuery.getArgs();
+                    // args: prodId, positionJson (JSON formatted position object)
+                    Object[] posProdCredObj = apiQuery.getArgs();
 
-                    if(posProdCred.length != 2) {
-                        throw ApiError.buildMsg("f_handlePositionsQuery, c_addPosToProd args should be of length 2"
-                                ,"");
+                    int prodId = ((LazilyParsedNumber) posProdCredObj[0]).intValue();
+                    String posJson = (String) posProdCredObj[1];
+
+                    positionsDB.addPosToProd(prodId, posJson);
+                    apiRes = "";
+                    break;
+
+                case "getPosForProd":
+                    // args: prodID
+                    Object[] prodIDObj = apiQuery.getArgs();
+                    validateArgs(prodIDObj, 1, int.class);
+
+                    int prodID = ((LazilyParsedNumber) prodIDObj[0]).intValue();
+
+                    Position[] positions = positionsDB.getPosForProd(prodID);
+
+                    JsonArray positionsJson = new JsonArray();
+
+                    for(Position pos : positions) {
+                        positionsJson.add(pos.toJson());
                     }
 
-                    int prodId = posProdCred[0];
-                    int posId = posProdCred[1];
+                    apiRes = positionsJson.toString();
+                    break;
 
-                    positionsDB.addPosition(prodId, posId);
+                case "getPosLevels":
+                    // args: key, room
+                    Object[] posCredArgs = apiQuery.getArgs();
+                    validateArgs(posCredArgs, 2, String.class);
+
+                    // Stupid to have them put in an array. should've been a map
+                    String keyGPL = (String) posCredArgs[0];
+                    String roomGPL = (String) posCredArgs[1];
+
+                    Integer[] posLevels = positionsDB.getPosLevels(keyGPL, roomGPL);
+
+                    JsonArray posLevelsJson = new JsonArray();
+
+                    for(int posLvl : posLevels) {
+                        posLevelsJson.add(posLvl);
+                    }
+
+                    apiRes = posLevelsJson.toString();
+                    break;
 
                 default:
                     apiRes= "";
@@ -178,10 +210,29 @@ public class Api {
             }
             return apiRes;
         } catch (ApiError e) {
-            return e.getMessage();
+            throw e;
         }
     }
 
+    // Only works when args has elements of a unique type. For now targetClass only a number or string
+    private static <T> void validateArgs(Object[] args, int targetLength, Class<T> targetClass) throws ApiError {
+        if(args.length != targetLength) {
+            throw ApiError.buildMsg("f_validateArgs cls_Api length of args should be %s and is %s"
+                            .formatted(targetLength, args.length),"");
+        }
+
+        // if expected a number the parseQuery func. should've returned "LazilyParsedNumber"
+        Class<?> validateClass = (targetClass == int.class || targetClass == float.class)
+                ? LazilyParsedNumber.class : targetClass;
+
+        for (Object arg: args) {
+            if(arg.getClass() != validateClass) {
+                throw ApiError.buildMsg("f_validateArgs cls_Api type of args should've been %s and it's %s"
+                                .formatted(validateClass, arg.getClass())
+                        ,"");
+            }
+        }
+    }
 
     private static ApiQuery parseQuery(String query) throws ApiError{
         try {
@@ -212,7 +263,7 @@ public class Api {
 
             return new ApiQuery(direction, method, argsArr);
         } catch (JsonSyntaxException e) {
-            throw ApiError.buildMsg("Error en el formato del Argumento",
+            throw ApiError.buildMsg("Error en el formato del argumento",
                     "Error en f_parseQuery: %s".formatted(e.getMessage()));
         }
     }

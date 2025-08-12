@@ -1,5 +1,6 @@
 package DB;
 
+import Api.Api;
 import Api.Types.ApiError;
 import DB.Types.Position;
 import DB.Types.Product;
@@ -7,6 +8,7 @@ import DB.Types.ProductPosition;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PositionsDB {
     Connection db;
@@ -35,17 +37,21 @@ public class PositionsDB {
         }
     }
 
-    public void addPosition(int prodID, int posID) throws ApiError {
+    public void addPosToProd(int prodId, String posQuery) throws ApiError {
         try {
-            if (this.repeated(prodID, posID)) {
+            Position position = Position.parsePosFromJson(posQuery);
+
+            int posId = getPositionId(position.getKey(), position.getRoom(), position.getLevel());
+
+            if (this.repeated(prodId, posId)) {
                 throw ApiError.buildMsg("f_addPosition cls_posDB the prod-pos relation already exists"
                         , "");
             }
 
             PreparedStatement st = this.db.prepareStatement("INSERT INTO products_positions " +
-                    "(products_id, position_id) VALUES (?, ?);");
-            st.setInt(1, prodID);
-            st.setInt(2, posID);
+                    "(product_id, position_id) VALUES (?, ?);");
+            st.setInt(1, prodId);
+            st.setInt(2, posId);
 
             st.executeUpdate();
         } catch (SQLException e) {
@@ -111,12 +117,12 @@ public class PositionsDB {
                 prods.add(new Product.Builder()
                         .id(rows.getInt("id"))
                         .mainCode(rows.getString("main_code"))
-                        .secondCode(rows.getString("secondary_code"))
+                        .secondCode(rows.getString("second_code"))
                         .description(rows.getString("description"))
-                        .sellPrice(rows.getDouble("selling_price"))
+                        .sellPrice(rows.getDouble("sell_price"))
                         .cost(rows.getDouble("cost"))
                         .currency(rows.getString("currency"))
-                        .artNum(rows.getInt("article_count"))
+                        .artNum(rows.getInt("art_num"))
                         .minQuantity(rows.getInt("min_quantity"))
                         .build());
             }
@@ -128,9 +134,14 @@ public class PositionsDB {
         }
     }
 
-    private int getPositionsId(String key, String room) throws ApiError{
+    private int getPositionId(String key, String room, int level) throws ApiError{
         try {
-            PreparedStatement st = this.db.prepareStatement("SELECT id FROM positions WHERE key = ? AND room = ?");
+            PreparedStatement st = this.db.prepareStatement(
+                    "SELECT id FROM positions WHERE key = ? AND room = ? AND level = ?");
+
+            st.setString(1, key);
+            st.setString(2, room);
+            st.setInt(3, level);
 
             ResultSet rows = st.executeQuery();
 
@@ -147,10 +158,10 @@ public class PositionsDB {
         }
     }
 
-    ArrayList<Position> getPositionByProd(int prodID) {
+    public Position[] getPosForProd(int prodID) throws ApiError{
         try {
-            PreparedStatement st = this.db.prepareStatement("SELECT pos.id, pos.room, pos.space, pos.level " +
-                    "FROM positions pos INNER JOIN products_positions pp ON pos.id = pp.position_id" +
+            PreparedStatement st = this.db.prepareStatement("SELECT pos.id, pos.room, pos.key, pos.level " +
+                    "FROM positions pos INNER JOIN products_positions pp ON pos.id = pp.position_id " +
                     "WHERE pp.product_id = ?;");
 
             st.setInt(1, prodID);
@@ -163,16 +174,39 @@ public class PositionsDB {
                 positions.add(new Position.Builder()
                                 .id(rows.getInt("id"))
                                 .room(rows.getString("room"))
-                                .space(rows.getString("space"))
+                                .key(rows.getString("key"))
                                 .level(rows.getInt("level"))
                         .build());
             }
 
-            return positions;
+            return positions.toArray(new Position[0]);
 
         } catch (SQLException e) {
-            System.out.printf("Error: %s", e.getMessage());
-            return null;
+            throw ApiError.buildMsg("f_getPosForProd cls_posDB error in the sql query", e.getMessage());
         }
     }
+
+    public Integer[] getPosLevels(String key, String room) throws ApiError {
+        try {
+            PreparedStatement st = this.db.prepareStatement("SELECT level FROM positions " +
+                    "WHERE key = ? AND room = ?");
+
+            st.setString(1, key);
+            st.setString(2, room);
+
+            ResultSet rows = st.executeQuery();
+
+            List<Integer> posLevels = new ArrayList<>();
+
+            while(rows.next()) {
+                posLevels.add(rows.getInt("level"));
+            }
+
+            return posLevels.toArray(new Integer[0]);
+
+        } catch (SQLException e) {
+            throw ApiError.buildMsg("f_getPosLevels cls_posDB error in the SQL query", e.getMessage());
+        }
+    }
+
 }
