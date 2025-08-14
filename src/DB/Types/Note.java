@@ -1,8 +1,13 @@
 package DB.Types;
 
+import Api.Types.ApiError;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import java.sql.Timestamp;
+
+import static Api.Utils.toTimestamp;
 
 public class Note {
     private  final int id;
@@ -65,5 +70,31 @@ public class Note {
         jsonNote.addProperty("total", this.getTotal());
 
         return jsonNote;
+    }
+
+    public static Note parseFromJson(String noteStr) throws ApiError {
+        try {
+            JsonObject noteJson = JsonParser.parseString(noteStr).getAsJsonObject();
+            int noteId;
+
+            Timestamp noteDate = toTimestamp(noteJson.get("date").getAsString());
+
+            if(noteJson.has("id")) {
+                noteId = noteJson.get("id").getAsInt();
+            } else {
+                noteId = 0;
+            }
+
+            return new Builder()
+                    .id(noteId)
+                    .type(noteJson.get("type").getAsString())
+                    .num(noteJson.get("num").getAsInt())
+                    .date(noteDate)
+                    .total(noteJson.get("total").getAsFloat())
+                    .build();
+
+        } catch (JsonSyntaxException e) {
+            throw ApiError.buildMsg("f_parseFromJson cls_note failed to parse Json syntax", e.getMessage());
+        }
     }
 }

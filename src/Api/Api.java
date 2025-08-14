@@ -1,10 +1,12 @@
 package Api;
 
+import DB.NotesDB;
 import DB.OrdersDB;
 import DB.PositionsDB;
 import DB.ProductsDB;
 import Api.Types.ApiQuery;
 import Api.Types.ApiError;
+import DB.Types.Note;
 import DB.Types.Order;
 import DB.Types.Position;
 import DB.Types.Product;
@@ -14,6 +16,9 @@ import com.google.gson.internal.LazilyParsedNumber;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
+
+import static Api.Utils.*;
 
 
 // TODO: 1. change the form of the args attribute to contain a map
@@ -29,7 +34,7 @@ import java.util.ArrayList;
 * Sure.
 * */
 public class Api {
-    public static String handleQuery(String query, ProductsDB productsDB, OrdersDB ordersDB, PositionsDB positionsDB) throws  ApiError{
+    public static String handleQuery(String query, ProductsDB productsDB, OrdersDB ordersDB, PositionsDB positionsDB, NotesDB notesDB) throws  ApiError{
         try {
             ApiQuery apiQuery = parseQuery(query);
 
@@ -40,6 +45,7 @@ public class Api {
                 case "Products" -> handleProdsQuery(apiQuery, productsDB);
                 case "Orders" -> handleOrdersQuery(apiQuery, ordersDB);
                 case "Positions" -> handlePositionsQuery(apiQuery, positionsDB);
+                case "Notes" -> handleNotesQuery(apiQuery, notesDB);
                 default -> "";
             };
 
@@ -106,8 +112,8 @@ public class Api {
                     String initDateStr = (String) ordersDatesObj[0];
                     String finalDateStr = (String) ordersDatesObj[1];
 
-                    Timestamp initialDate = OrdersDB.toTimestamp(initDateStr);
-                    Timestamp finalDate = OrdersDB.toTimestamp(finalDateStr);
+                    Timestamp initialDate = toTimestamp(initDateStr);
+                    Timestamp finalDate = toTimestamp(finalDateStr);
 
                     Order[] orders = ordersDB.getOrdersByDate(initialDate, finalDate);
 
@@ -214,57 +220,82 @@ public class Api {
         }
     }
 
-    // Only works when args has elements of a unique type. For now targetClass only a number or string
-    private static <T> void validateArgs(Object[] args, int targetLength, Class<T> targetClass) throws ApiError {
-        if(args.length != targetLength) {
-            throw ApiError.buildMsg("f_validateArgs cls_Api length of args should be %s and is %s"
-                            .formatted(targetLength, args.length),"");
-        }
-
-        // if expected a number the parseQuery func. should've returned "LazilyParsedNumber"
-        Class<?> validateClass = (targetClass == int.class || targetClass == float.class)
-                ? LazilyParsedNumber.class : targetClass;
-
-        for (Object arg: args) {
-            if(arg.getClass() != validateClass) {
-                throw ApiError.buildMsg("f_validateArgs cls_Api type of args should've been %s and it's %s"
-                                .formatted(validateClass, arg.getClass())
-                        ,"");
-            }
-        }
-    }
-
-    private static ApiQuery parseQuery(String query) throws ApiError{
+    public static String handleNotesQuery(ApiQuery apiQuery, NotesDB notesDB) throws ApiError {
+        String method = apiQuery.getMethod();
         try {
-            JsonObject jsonQuery = JsonParser.parseString(query).getAsJsonObject();
+            String apiRes;
 
-            String direction = jsonQuery.get("direction").getAsString();
-            String method = jsonQuery.get("method").getAsString();
+            switch (method) {
+                case "getNotesByDate":
+                    // args: initDate, finalDate
+                    Object[] datesObj = apiQuery.getArgs();
+                    validateArgs(datesObj, 2, String.class);
 
-            ArrayList<Object> args = new ArrayList<>();
-            JsonArray jsonArgs = jsonQuery.getAsJsonArray("args");
+                    String initStr = (String) datesObj[0];
+                    String finalStr = (String) datesObj[1];
 
-            // For every element in the args array identify the type and added to the list
-            for(JsonElement el : jsonArgs ) {
-                if(!el.isJsonPrimitive()) {
-                    args.add(el.getAsString());
-                }
-                JsonPrimitive e = el.getAsJsonPrimitive();
-                if(e.isNumber()) {
-                    args.add(e.getAsNumber());
-                } else if (e.isString()) {
-                    args.add(e.getAsString());
-                } else if (e.isBoolean()) {
-                    args.add(e.getAsBoolean());
-                }
+                    Timestamp initDate = toTimestamp(initStr);
+                    Timestamp finalDate = toTimestamp(finalStr);
+
+                    Note[] notes = notesDB.getNotesByDate(initDate, finalDate);
+
+                    JsonArray notesJson = new JsonArray();
+
+                    for (Note note : notes) {
+                        notesJson.add(note.toJson());
+                    }
+
+                    apiRes = notesJson.toString();
+                    break;
+
+                case "getProdsInNote":
+                    // args: String type, int num
+                    Object[] noteCreds = apiQuery.getArgs();
+
+                    // NOTE: no validating args for now
+                    String noteType = (String) noteCreds[0];
+                    int noteNum = ((LazilyParsedNumber) noteCreds[1]).intValue();
+
+                    Product[] prods = notesDB.getProdsInNote(noteType, noteNum);
+
+                    JsonArray prodsJson = new JsonArray();
+
+                    for (Product prod : prods) {
+                        prodsJson.add(prod.toJson());
+                    }
+
+                    apiRes = prodsJson.toString();
+                    break;
+
+                case "addNote":
+                    // args: String note, String prods
+                    // prods is a json formated string with the prods obj.
+                    // same with note
+                    Object[] prodsNNoteObj = apiQuery.getArgs();
+                    validateArgs(prodsNNoteObj, 2, String.class);
+
+                    String noteJsonStr = (String) prodsNNoteObj[0];
+                    String prodsJsonStr = (String) prodsNNoteObj[1];
+
+                    Product[] prodsToNote = Product.parseProdsJsonArr(prodsJsonStr);
+                    Note note = Note.parseFromJson(noteJsonStr);
+
+                    notesDB.addNote(note, prodsToNote);
+
+                    apiRes = "";
+                    break;
+
+                default:
+                    apiRes = "";
+                    break;
+
             }
-            Object[] argsArr = new Object[args.toArray().length];
-            argsArr = args.toArray(argsArr);
-
-            return new ApiQuery(direction, method, argsArr);
-        } catch (JsonSyntaxException e) {
-            throw ApiError.buildMsg("Error en el formato del argumento",
-                    "Error en f_parseQuery: %s".formatted(e.getMessage()));
+            return apiRes;
+        } catch (ApiError e) {
+            throw e;
         }
+
     }
+
+
 }

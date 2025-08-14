@@ -1,4 +1,5 @@
 import Api.Types.ApiError;
+import DB.NotesDB;
 import DB.OrdersDB;
 import DB.PositionsDB;
 import DB.ProductsDB;
@@ -29,12 +30,13 @@ public class Main {
             ProductsDB productsDB = new ProductsDB(db);
             OrdersDB ordersDB = new OrdersDB(db);
             PositionsDB positionsDB = new PositionsDB(db);
+            NotesDB notesDB = new NotesDB(db);
 
             if (args.length == 1) {
-                res = handleQuery(args[0], productsDB, ordersDB, positionsDB);
+                res = handleQuery(args[0], productsDB, ordersDB, positionsDB, notesDB);
             } else {
                 String tempQuery = "{\"direction\":\"Positions\",\"method\":\"getPosForProd\",\"args\":[14409]}";
-                res = handleQuery(tempQuery, productsDB, ordersDB, positionsDB);
+                res = handleQuery(tempQuery, productsDB, ordersDB, positionsDB, notesDB);
             }
 
             System.out.println(res);

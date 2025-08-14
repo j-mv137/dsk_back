@@ -11,13 +11,14 @@ import java.util.ArrayList;
 public class NotesDB {
     Connection db;
 
-    NotesDB(Connection db) throws ApiError {
+    public NotesDB(Connection db) throws ApiError {
         this.db = db;
 
         // TEMPORAL
         try {
             PreparedStatement st = db.prepareStatement("CREATE TABLE IF NOT EXISTS notes (" +
-                    "id SERIAL PRIMARY KEY, type VARCHAR, num INTEGER, total REAL);");
+                    "id SERIAL PRIMARY KEY, type VARCHAR, num INTEGER, total REAL), " +
+                    "CONSTRAINT unique_note_type_num UNIQUE (type, num);");
 
             st.executeUpdate();
 
@@ -37,7 +38,7 @@ public class NotesDB {
     }
 
 
-    public Note[] getNotesbyDate(Timestamp initDate, Timestamp finalDate) throws ApiError {
+    public Note[] getNotesByDate(Timestamp initDate, Timestamp finalDate) throws ApiError {
         ArrayList<Note> notesList = new ArrayList<>();
         try {
             PreparedStatement st = this.db.prepareStatement("SELECT * FROM notes WHERE date > ? AND date < ?;");
@@ -100,20 +101,48 @@ public class NotesDB {
 
     }
 
-    public void addProdsToNote(Product[] prods, int noteID) throws ApiError {
+    public void addNote(Note noteCred, Product[] prods) throws ApiError {
+        try {
+            PreparedStatement st = this.db.prepareStatement("INSERT INTO notes (type, num, date, total) " +
+                    "VALUES (?, ?, ?, ?);");
+
+            st.setString(1, noteCred.getType());
+            st.setInt(2, noteCred.getNum());
+            st.setTimestamp(3, noteCred.getDate());
+            st.setFloat(4, noteCred.getTotal());
+
+            st.executeUpdate();
+
+            // elite. get the id of the note we just added
+            PreparedStatement st2 = this.db.prepareStatement("SELECT id FROM notes ORDER BY id DESC LIMIT 1;");
+            ResultSet row = st2.executeQuery();
+
+            row.next();
+            int noteId = row.getInt("id");
+
+            addProdsToNote(prods, noteId);
+
+        } catch (SQLException e) {
+            throw ApiError.buildMsg("f_addNote cls_notesDB failed to exec. SQL query", e.getMessage());
+        }
+    }
+
+    private void addProdsToNote(Product[] prods, int noteID) throws ApiError {
         try {
             PreparedStatement st = this.db.prepareStatement("INSERT INTO note_product (note_id, product_id) " +
-                    "VALUES (?, ?)");
-
+                    "VALUES (?, ?);");
 
             for (Product prod : prods) {
                 st.setInt(1, noteID);
-                st.setInt(2, );
+                st.setInt(2, prod.getId());
+
+                st.executeUpdate();
             }
 
         } catch (SQLException e) {
             throw ApiError.buildMsg("f_addProdsToNote cls_notesDB failed to exec. SQL", e.getMessage());
         }
 
-        }
+    }
+
 }

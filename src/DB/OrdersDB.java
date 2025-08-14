@@ -85,11 +85,4 @@ public class OrdersDB {
             throw ApiError.buildMsg("Error al filtrar por fecha", e.getMessage());
         }
     }
-
-    public static Timestamp toTimestamp(String dateTimeStr) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm:ss");
-        LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr, formatter);
-
-        return Timestamp.valueOf(dateTime);
-    }
 }

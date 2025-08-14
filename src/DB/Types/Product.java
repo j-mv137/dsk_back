@@ -1,6 +1,10 @@
 package DB.Types;
 
-import com.google.gson.JsonObject;
+import Api.Types.ApiError;
+import com.google.gson.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Product {
     private final int id;
@@ -27,6 +31,10 @@ public class Product {
         this.currency = b.currency;
         this.artNum = b.artNum;
         this.minQuantity = b.minQuantity;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getMainCode() {
@@ -160,5 +168,38 @@ public class Product {
         jsonProd.addProperty("minQuantity", this.minQuantity);
 
         return jsonProd;
+    }
+
+    public static Product parseProdFromJson(JsonObject prodJson) {
+        return new Builder()
+                .id(prodJson.get("id").getAsInt())
+                .mainCode(prodJson.get("mainCode").getAsString())
+                .secondCode(prodJson.get("secondCode").getAsString())
+                .description(prodJson.get("description").getAsString())
+                .department(prodJson.get("department").getAsString())
+                .category(prodJson.get("category").getAsString())
+                .sellPrice(prodJson.get("sellPrice").getAsFloat())
+                .cost(prodJson.get(("cost")).getAsFloat())
+                .currency(prodJson.get("artNum").getAsString())
+                .minQuantity(prodJson.get("minQuantity").getAsInt())
+                .build();
+    }
+
+    public static Product[] parseProdsJsonArr(String prodsJsonStr) throws ApiError {
+        try {
+            JsonArray prodsJsonArr = JsonParser.parseString(prodsJsonStr).getAsJsonArray();
+            List<Product> prodsList = new ArrayList<>();
+
+            for (JsonElement prodJsonEl : prodsJsonArr) {
+                Product prod = Product.parseProdFromJson(prodJsonEl.getAsJsonObject());
+                prodsList.add(prod);
+            }
+
+            return prodsList.toArray(new Product[0]);
+
+        } catch (JsonSyntaxException e) {
+            throw ApiError.buildMsg("f_parseProdsJsonArr cls_product failed to parse json syntax"
+                , e.getMessage());
+        }
     }
 }

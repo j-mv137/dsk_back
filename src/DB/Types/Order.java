@@ -7,7 +7,7 @@ import com.google.gson.JsonSyntaxException;
 
 import java.sql.Timestamp;
 
-import static DB.OrdersDB.toTimestamp;
+import static Api.Utils.toTimestamp;
 
 public class Order {
     private final int id;
