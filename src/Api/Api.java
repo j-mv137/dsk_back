@@ -15,8 +15,6 @@ import com.google.gson.*;
 import com.google.gson.internal.LazilyParsedNumber;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 import static Api.Utils.*;
 
@@ -77,7 +75,7 @@ public class Api {
                     apiRes = prodsJson.toString();
                     break;
                 default:
-                    apiRes="";
+                    throw ApiError.buildMsg("f_handleProdsQuery cls_api unknown method", "");
             }
             return apiRes;
         } catch (ApiError e) {
@@ -127,7 +125,7 @@ public class Api {
 
                     break;
                 default:
-                    apiRes = "";
+                    throw ApiError.buildMsg("f_handleOrdersQuery cls_api unknown method", "");
             }
 
             return apiRes;
@@ -211,8 +209,7 @@ public class Api {
                     break;
 
                 default:
-                    apiRes= "";
-                    break;
+                    throw ApiError.buildMsg("f_handlePositionsQuery cls_api unknown method", "");
             }
             return apiRes;
         } catch (ApiError e) {
@@ -286,9 +283,7 @@ public class Api {
                     break;
 
                 default:
-                    apiRes = "";
-                    break;
-
+                    throw ApiError.buildMsg("f_handleNotesQuery cls_api unknown method", "");
             }
             return apiRes;
         } catch (ApiError e) {
@@ -296,6 +291,4 @@ public class Api {
         }
 
     }
-
-
 }

@@ -17,18 +17,19 @@ public class NotesDB {
         // TEMPORAL
         try {
             PreparedStatement st = db.prepareStatement("CREATE TABLE IF NOT EXISTS notes (" +
-                    "id SERIAL PRIMARY KEY, type VARCHAR, num INTEGER, total REAL), " +
-                    "CONSTRAINT unique_note_type_num UNIQUE (type, num);");
+                    "id SERIAL PRIMARY KEY, type VARCHAR, num INTEGER, total REAL, " +
+                    "CONSTRAINT unique_note_type_num UNIQUE (type, num)" +
+                    ");");
 
             st.executeUpdate();
 
             PreparedStatement st2 = db.prepareStatement("CREATE TABLE IF NOT EXISTS notes_products (" +
-                    "id SERIAL PRIMARY KEY, note_id INTEGER, product_id INTEGER" +
+                    "id SERIAL PRIMARY KEY, note_id INTEGER, product_id INTEGER, " +
                     "CONSTRAINT unique_note_prod UNIQUE (note_id, product_id)," +
                     "CONSTRAINT FK_note_id FOREIGN KEY(note_id) REFERENCES notes(id) " +
                     "ON UPDATE CASCADE ON DELETE CASCADE, " +
-                    "CONSTRAINT FK_product_id FOREIGN KEY(product_id) REFERENCES products(id)) " +
-                    "ON UPDATE CASCADE ON DELETE CASCADE;");
+                    "CONSTRAINT FK_product_id FOREIGN KEY(product_id) REFERENCES products(id) " +
+                    "ON UPDATE CASCADE ON DELETE CASCADE);");
 
             st2.executeUpdate();
 

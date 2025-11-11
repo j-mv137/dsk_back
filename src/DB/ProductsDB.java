@@ -239,7 +239,7 @@ public class ProductsDB {
         try {
             PreparedStatement st = this.db.prepareStatement("INSERT INTO products " +
                     "(main_code, second_code, description, department, category, sell_price, cost, currency, " +
-                    "artNum, min_quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                    "artNum, min_quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 
 
             st.setString(1, product.getMainCode());

@@ -35,7 +35,7 @@ public class Main {
             if (args.length == 1) {
                 res = handleQuery(args[0], productsDB, ordersDB, positionsDB, notesDB);
             } else {
-                String tempQuery = "{\"direction\":\"Positions\",\"method\":\"getPosForProd\",\"args\":[14409]}";
+                String tempQuery = "{\"direction\":\"Products\",\"method\":\"getProdsBySearch\",\"args\":[\"bomba dab \"]}";
                 res = handleQuery(tempQuery, productsDB, ordersDB, positionsDB, notesDB);
             }
 

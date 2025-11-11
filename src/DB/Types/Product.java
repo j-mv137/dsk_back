@@ -73,9 +73,7 @@ public class Product {
         return artNum;
     }
 
-    public int getMinQuantity() {
-        return minQuantity;
-    }
+    public int getMinQuantity() { return minQuantity; }
 
 
     public static class Builder {
